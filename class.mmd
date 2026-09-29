@@ -1,0 +1,43 @@
+---
+title: Class Diagram – MPSS
+---
+classDiagram
+  direction LR
+  class Vendor {
+    +int vendor_id
+    +String name
+    +String address
+    +String phone
+  }
+  class Part {
+    +String part_no
+    +String name
+    +String manufacturer
+    +String vehicle_make
+    +String vehicle_model
+    +String rack_no
+    +float price
+    +int stock
+    +int vendor_id
+    +weekly_average() float
+    +threshold() int
+    +amount_required() int
+    +restock(qty) void
+  }
+  class Sale {
+    +int sale_id
+    +String part_no
+    +int quantity
+    +float amount
+    +Date sale_date
+    +record_sale() void
+  }
+  class ReportGenerator {
+    +daily_revenue(date) float
+    +order_list(date) List
+    +monthly_sales(month) List
+  }
+  Vendor "1" --> "*" Part : supplies
+  Part "1" --> "*" Sale : sold in
+  ReportGenerator ..> Part : reads
+  ReportGenerator ..> Sale : reads

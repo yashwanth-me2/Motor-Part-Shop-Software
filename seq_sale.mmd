@@ -1,0 +1,21 @@
+---
+title: Sequence Diagram 1 – Record a Sale
+---
+sequenceDiagram
+  actor Owner as Shop Owner
+  participant UI as New Sale Page
+  participant API as Flask API
+  participant DB as SQLite DB
+  Owner->>UI: choose part, enter quantity, click Save
+  UI->>API: POST /api/sales {part_no, quantity}
+  API->>DB: SELECT part (price, stock)
+  DB-->>API: part row
+  alt part found AND quantity <= stock
+    API->>DB: UPDATE parts SET stock = stock - quantity (WHERE stock >= quantity)
+    API->>DB: INSERT INTO sales (amount = price x quantity)
+    API-->>UI: 201 Created {sale}
+    UI-->>Owner: "Sale saved" + refresh today's sales
+  else part missing / not enough stock / bad quantity
+    API-->>UI: 400 or 404 {error}
+    UI-->>Owner: show error message
+  end

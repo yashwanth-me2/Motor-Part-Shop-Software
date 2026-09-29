@@ -1,0 +1,13 @@
+---
+title: How MPSS works (Architecture)
+---
+flowchart LR
+  B["Browser<br/>HTML + CSS + JavaScript<br/>(6 pages)"]
+  F["Flask server<br/>app.py<br/>(REST API)"]
+  S[("SQLite<br/>mpss.db<br/>vendors, parts, sales")]
+  B -- "fetch() JSON request" --> F
+  F -- "JSON response" --> B
+  F -- "SQL" --> S
+  S -- "rows" --> F
+  classDef box fill:#e8f1fb,stroke:#2b5c8a,stroke-width:2px
+  class B,F,S box

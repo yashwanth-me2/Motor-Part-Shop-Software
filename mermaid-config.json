@@ -1,0 +1,2 @@
+{ "sequence": { "mirrorActors": false, "actorMargin": 40, "messageFontSize": 17, "noteFontSize": 16, "actorFontSize": 17, "boxMargin": 8 },
+  "themeVariables": { "fontSize": "17px" } }

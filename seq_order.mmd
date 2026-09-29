@@ -1,0 +1,23 @@
+---
+title: Sequence Diagram 2 – End-of-Day Order List
+---
+sequenceDiagram
+  actor Owner as Shop Owner
+  participant UI as Reports Page
+  participant API as Flask API
+  participant DB as SQLite DB
+  Owner->>UI: click "Generate Order List"
+  UI->>API: GET /api/reports/order-list?date=YYYY-MM-DD
+  API->>DB: SELECT all parts JOIN vendors
+  DB-->>API: parts with vendor address
+  loop for each part
+    API->>DB: SUM(quantity) of sales in last 28 days
+    DB-->>API: units sold
+    Note over API: weekly_average = units / 4<br/>threshold = ceil(weekly_average)
+    opt stock < threshold
+      Note over API: add (part_no, amount = threshold - stock, vendor address)
+    end
+  end
+  API-->>UI: 200 [order items]
+  UI-->>Owner: table of part no., amount, vendor address
+  Owner->>UI: click Print

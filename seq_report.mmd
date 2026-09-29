@@ -1,0 +1,22 @@
+---
+title: Sequence Diagram 3 – Daily Revenue and Monthly Sales Graph
+---
+sequenceDiagram
+  actor Owner as Shop Owner
+  participant UI as Reports Page
+  participant API as Flask API
+  participant DB as SQLite DB
+  Owner->>UI: pick a date
+  UI->>API: GET /api/reports/daily-revenue?date=YYYY-MM-DD
+  API->>DB: SUM(amount) of sales on that date
+  DB-->>API: total
+  API-->>UI: {date, revenue}
+  UI-->>Owner: show revenue
+  Owner->>UI: pick a month
+  UI->>API: GET /api/reports/monthly-sales?month=YYYY-MM
+  API->>DB: SUM(amount) GROUP BY sale_date for that month
+  DB-->>API: rows (only days that had sales)
+  Note over API: fill missing days with 0
+  API-->>UI: [{day, revenue}, ...] one per day
+  UI->>UI: JavaScript draws one bar per day
+  UI-->>Owner: graph of sales for each day
