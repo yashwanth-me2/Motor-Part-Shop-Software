@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vendors - MPSS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><b>MPSS</b><a href="index.html">Dashboard</a><a href="parts.html">Parts</a><a href="vendors.html" class="active">Vendors</a><a href="sale.html">New Sale</a><a href="order.html">Order List</a><a href="reports.html">Reports</a></nav>
+<main>
+  <h1>Vendors</h1>
+  <div class="box">
+    <h2>Add vendor</h2>
+    <form id="vendorForm">
+      <label>Name <input id="name" required></label>
+      <label>Address <input id="address" size="40" required></label>
+      <label>Phone <input id="phone"></label>
+      <button type="submit">Add</button>
+    </form>
+    <div id="msg" class="msg"></div>
+  </div>
+  <div class="box">
+    <h2>All vendors</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Address</th><th>Phone</th></tr></thead>
+        <tbody id="vendorRows"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<script src="common.js"></script>
+<script>
+async function loadVendors() {
+  const vendors = await api("/api/vendors");
+  let rows = "";
+  for (const v of vendors) {
+    rows += `<tr><td>${v.vendor_id}</td><td>${esc(v.name)}</td><td>${esc(v.address)}</td><td>${esc(v.phone)}</td></tr>`;
+  }
+  document.getElementById("vendorRows").innerHTML = rows;
+}
+
+document.getElementById("vendorForm").onsubmit = async function (e) {
+  e.preventDefault();
+  try {
+    await api("/api/vendors", "POST", {
+      name: document.getElementById("name").value,
+      address: document.getElementById("address").value,
+      phone: document.getElementById("phone").value,
+    });
+    showMessage("msg", "Vendor added", false);
+    this.reset();
+    loadVendors();
+  } catch (err) {
+    showMessage("msg", err.message, true);
+  }
+};
+loadVendors();
+</script>
+</body>
+</html>

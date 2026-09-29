@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard - MPSS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><b>MPSS</b><a href="index.html" class="active">Dashboard</a><a href="parts.html">Parts</a><a href="vendors.html">Vendors</a><a href="sale.html">New Sale</a><a href="order.html">Order List</a><a href="reports.html">Reports</a></nav>
+<main>
+  <h1>Dashboard</h1>
+  <div class="cards">
+    <div class="card">Today's revenue<div class="num" id="revenue">-</div></div>
+    <div class="card">Parts in shop<div class="num" id="partCount">-</div></div>
+    <div class="card">Parts to order<div class="num" id="orderCount">-</div></div>
+  </div>
+  <div class="box">
+    <h2>Parts below threshold (need ordering)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Part No.</th><th>Name</th><th>Stock</th><th>Threshold</th><th>Order</th></tr></thead>
+        <tbody id="lowParts"></tbody>
+      </table>
+    </div>
+    <p><a href="order.html">Open full order list &rarr;</a></p>
+  </div>
+</main>
+<script src="common.js"></script>
+<script>
+async function load() {
+  const revenue = await api("/api/reports/daily-revenue");
+  const parts = await api("/api/parts");
+  const orders = await api("/api/reports/order-list");
+
+  document.getElementById("revenue").textContent = money(revenue.revenue);
+  document.getElementById("partCount").textContent = parts.length;
+  document.getElementById("orderCount").textContent = orders.length;
+
+  let rows = "";
+  for (const o of orders) {
+    rows += `<tr><td>${esc(o.part_no)}</td><td>${esc(o.name)}</td><td class="low">${o.stock}</td>
+             <td>${o.threshold}</td><td>${o.amount_required}</td></tr>`;
+  }
+  document.getElementById("lowParts").innerHTML = rows || '<tr><td colspan="5">All parts have enough stock.</td></tr>';
+}
+load();
+</script>
+</body>
+</html>

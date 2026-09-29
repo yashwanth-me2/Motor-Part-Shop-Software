@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parts - MPSS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><b>MPSS</b><a href="index.html">Dashboard</a><a href="parts.html" class="active">Parts</a><a href="vendors.html">Vendors</a><a href="sale.html">New Sale</a><a href="order.html">Order List</a><a href="reports.html">Reports</a></nav>
+<main>
+  <h1>Parts &amp; Stock</h1>
+  <div class="box">
+    <h2>All parts (sorted by rack)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Rack</th><th>Part No.</th><th>Name</th><th>Vehicle</th><th>Manufacturer</th><th>Vendor</th>
+          <th>Price</th><th>Stock</th><th>Weekly avg</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody id="partRows"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="box">
+    <h2>Restock (parts received from vendor)</h2>
+    <form id="restockForm">
+      <label>Part <select id="restockPart"></select></label>
+      <label>Quantity received <input id="restockQty" type="number" min="1" required></label>
+      <button type="submit">Add to stock</button>
+    </form>
+    <div id="restockMsg" class="msg"></div>
+  </div>
+  <div class="box">
+    <h2>Add new part</h2>
+    <form id="partForm">
+      <label>Part No. <input id="part_no" required></label>
+      <label>Name <input id="pname" required></label>
+      <label>Manufacturer <input id="manufacturer"></label>
+      <label>Vehicle make <input id="vehicle_make"></label>
+      <label>Vehicle model <input id="vehicle_model"></label>
+      <label>Rack No. <input id="rack_no" required></label>
+      <label>Price (₹) <input id="price" type="number" step="0.01" min="0.01" required></label>
+      <label>Opening stock <input id="stock" type="number" min="0" value="0"></label>
+      <label>Vendor <select id="vendor"></select></label>
+      <button type="submit">Add part</button>
+    </form>
+    <div id="partMsg" class="msg"></div>
+  </div>
+</main>
+<script src="common.js"></script>
+<script>
+async function loadParts() {
+  const parts = await api("/api/parts");
+  let rows = "", options = "";
+  for (const p of parts) {
+    const status = p.needs_order ? '<span class="low">Order</span>' : '<span class="ok">OK</span>';
+    rows += `<tr><td>${esc(p.rack_no)}</td><td>${esc(p.part_no)}</td><td>${esc(p.name)}</td>
+      <td>${esc(p.vehicle_make)} ${esc(p.vehicle_model)}</td><td>${esc(p.manufacturer)}</td><td>${esc(p.vendor_name)}</td>
+      <td>${money(p.price)}</td><td>${p.stock}</td><td>${p.weekly_average}</td><td>${p.threshold}</td><td>${status}</td></tr>`;
+    options += `<option value="${esc(p.part_no)}">${esc(p.part_no)} - ${esc(p.name)}</option>`;
+  }
+  document.getElementById("partRows").innerHTML = rows;
+  document.getElementById("restockPart").innerHTML = options;
+}
+
+async function loadVendors() {
+  const vendors = await api("/api/vendors");
+  document.getElementById("vendor").innerHTML =
+    vendors.map(v => `<option value="${v.vendor_id}">${esc(v.name)}</option>`).join("");
+}
+
+document.getElementById("restockForm").onsubmit = async function (e) {
+  e.preventDefault();
+  const partNo = document.getElementById("restockPart").value;
+  try {
+    const result = await api(`/api/parts/${encodeURIComponent(partNo)}/restock`, "POST",
+                             { quantity: Number(document.getElementById("restockQty").value) });
+    showMessage("restockMsg", `Stock of ${partNo} is now ${result.stock}`, false);
+    this.reset();
+    loadParts();
+  } catch (err) {
+    showMessage("restockMsg", err.message, true);
+  }
+};
+
+document.getElementById("partForm").onsubmit = async function (e) {
+  e.preventDefault();
+  const value = id => document.getElementById(id).value;
+  try {
+    await api("/api/parts", "POST", {
+      part_no: value("part_no"), name: value("pname"), manufacturer: value("manufacturer"),
+      vehicle_make: value("vehicle_make"), vehicle_model: value("vehicle_model"), rack_no: value("rack_no"),
+      price: Number(value("price")), stock: Number(value("stock")), vendor_id: Number(value("vendor")),
+    });
+    showMessage("partMsg", "Part added", false);
+    this.reset();
+    loadParts();
+  } catch (err) {
+    showMessage("partMsg", err.message, true);
+  }
+};
+
+loadParts();
+loadVendors();
+</script>
+</body>
+</html>
