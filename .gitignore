@@ -1,0 +1,5 @@
+  __pycache__/
+  *.pyc
+  mpss.db
+  .venv/
+  venv/
