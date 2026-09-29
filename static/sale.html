@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New Sale - MPSS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><b>MPSS</b><a href="index.html">Dashboard</a><a href="parts.html">Parts</a><a href="vendors.html">Vendors</a><a href="sale.html" class="active">New Sale</a><a href="order.html">Order List</a><a href="reports.html">Reports</a></nav>
+<main>
+  <h1>New Sale</h1>
+  <div class="box">
+    <form id="saleForm">
+      <label>Part <select id="part"></select></label>
+      <label>Quantity <input id="qty" type="number" min="1" value="1" required></label>
+      <button type="submit">Save sale</button>
+    </form>
+    <p id="partInfo" class="msg"></p>
+    <div id="msg" class="msg"></div>
+  </div>
+  <div class="box">
+    <h2>Today's sales &mdash; total <span id="total">₹0.00</span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sale ID</th><th>Part No.</th><th>Name</th><th>Qty</th><th>Amount</th></tr></thead>
+        <tbody id="saleRows"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<script src="common.js"></script>
+<script>
+let parts = [];
+
+async function loadParts() {
+  const selected = document.getElementById("part").value;
+  parts = await api("/api/parts");
+  document.getElementById("part").innerHTML =
+    parts.map(p => `<option value="${esc(p.part_no)}">${esc(p.part_no)} - ${esc(p.name)}</option>`).join("");
+  if (selected) document.getElementById("part").value = selected;
+  showPartInfo();
+}
+
+// show price and stock of the selected part
+function showPartInfo() {
+  const p = parts.find(x => x.part_no === document.getElementById("part").value);
+  document.getElementById("partInfo").textContent = p ? `Price ${money(p.price)} | In stock: ${p.stock} | Rack ${p.rack_no}` : "";
+}
+
+async function loadSales() {
+  const sales = await api("/api/sales");
+  let rows = "", total = 0;
+  for (const s of sales) {
+    rows += `<tr><td>${s.sale_id}</td><td>${esc(s.part_no)}</td><td>${esc(s.name)}</td><td>${s.quantity}</td><td>${money(s.amount)}</td></tr>`;
+    total += s.amount;
+  }
+  document.getElementById("saleRows").innerHTML = rows || '<tr><td colspan="5">No sales yet today.</td></tr>';
+  document.getElementById("total").textContent = money(total);
+}
+
+document.getElementById("part").onchange = showPartInfo;
+
+document.getElementById("saleForm").onsubmit = async function (e) {
+  e.preventDefault();
+  const button = this.querySelector("button");
+  button.disabled = true;                      // stop double-click = double sale
+  try {
+    const sale = await api("/api/sales", "POST", {
+      part_no: document.getElementById("part").value,
+      quantity: Number(document.getElementById("qty").value),
+    });
+    showMessage("msg", `Sale saved: ${sale.quantity} x ${sale.part_no} = ${money(sale.amount)}`, false);
+    await loadParts();
+    await loadSales();
+  } catch (err) {
+    showMessage("msg", err.message, true);
+  }
+  button.disabled = false;
+};
+
+loadParts();
+loadSales();
+</script>
+</body>
+</html>

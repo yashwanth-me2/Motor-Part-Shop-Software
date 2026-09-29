@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order List - MPSS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><b>MPSS</b><a href="index.html">Dashboard</a><a href="parts.html">Parts</a><a href="vendors.html">Vendors</a><a href="sale.html">New Sale</a><a href="order.html" class="active">Order List</a><a href="reports.html">Reports</a></nav>
+<main>
+  <h1>Order List</h1>
+  <div class="box">
+    <form id="orderForm" class="no-print">
+      <label>Date <input id="date" type="date" required></label>
+      <button type="submit">Generate order list</button>
+      <button type="button" onclick="window.print()">Print</button>
+    </form>
+    <h2 style="margin-top:16px">Items to order &mdash; <span id="forDate"></span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Part No.</th><th>Name</th><th>Stock</th><th>Threshold</th><th>Amount required</th><th>Vendor</th><th>Vendor address</th></tr></thead>
+        <tbody id="orderRows"></tbody>
+      </table>
+    </div>
+    <p class="no-print" style="font-size:13px;color:#555">
+      Threshold = average units sold per week (last 4 weeks), rounded up. A part is ordered when stock &lt; threshold.
+      Amount required = threshold &minus; stock.
+    </p>
+  </div>
+</main>
+<script src="common.js"></script>
+<script>
+async function loadOrders() {
+  const date = document.getElementById("date").value;
+  const items = await api("/api/reports/order-list?date=" + date);
+  let rows = "";
+  for (const o of items) {
+    rows += `<tr><td>${esc(o.part_no)}</td><td>${esc(o.name)}</td><td>${o.stock}</td><td>${o.threshold}</td>
+      <td><b>${o.amount_required}</b></td><td>${esc(o.vendor_name)}</td><td>${esc(o.vendor_address)}</td></tr>`;
+  }
+  document.getElementById("orderRows").innerHTML = rows || '<tr><td colspan="7">Nothing to order.</td></tr>';
+  document.getElementById("forDate").textContent = date;
+}
+
+document.getElementById("date").value = today();
+document.getElementById("orderForm").onsubmit = function (e) { e.preventDefault(); loadOrders(); };
+loadOrders();
+</script>
+</body>
+</html>

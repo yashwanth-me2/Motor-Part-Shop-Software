@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reports - MPSS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><b>MPSS</b><a href="index.html">Dashboard</a><a href="parts.html">Parts</a><a href="vendors.html">Vendors</a><a href="sale.html">New Sale</a><a href="order.html">Order List</a><a href="reports.html" class="active">Reports</a></nav>
+<main>
+  <h1>Reports</h1>
+  <div class="box">
+    <h2>Revenue for a day</h2>
+    <form id="dayForm">
+      <label>Date <input id="date" type="date" required></label>
+      <button type="submit">Show revenue</button>
+    </form>
+    <div class="card" style="margin-top:12px;max-width:260px">Revenue on <span id="dayLabel"></span>
+      <div class="num" id="dayRevenue">-</div></div>
+  </div>
+  <div class="box">
+    <h2>Sales for each day of the month</h2>
+    <form id="monthForm">
+      <label>Month <input id="month" type="month" required></label>
+      <button type="submit">Show graph</button>
+    </form>
+    <p>Total for the month: <b id="monthTotal">-</b> &nbsp;|&nbsp; Best day: <b id="bestDay">-</b> &nbsp; (hover a bar to see its amount)</p>
+    <div class="graph" id="graph"></div>
+    <div class="days" id="days"></div>
+  </div>
+</main>
+<script src="common.js"></script>
+<script>
+async function showDay() {
+  const date = document.getElementById("date").value;
+  const result = await api("/api/reports/daily-revenue?date=" + date);
+  document.getElementById("dayLabel").textContent = result.date;
+  document.getElementById("dayRevenue").textContent = money(result.revenue);
+}
+
+// draw one bar per day; bar height = revenue / highest revenue
+async function showMonth() {
+  const data = await api("/api/reports/monthly-sales?month=" + document.getElementById("month").value);
+  const highest = Math.max(1, ...data.map(d => d.revenue));
+  let bars = "", labels = "", total = 0;
+  for (const d of data) {
+    const height = (d.revenue / highest) * 100;
+    bars += `<div class="bar-col" title="${d.date}: ${money(d.revenue)} (${d.units} units)">
+               <div class="bar" style="height:${height}%"></div></div>`;
+    labels += `<span>${d.day}</span>`;
+    total += d.revenue;
+  }
+  document.getElementById("graph").innerHTML = bars;
+  document.getElementById("days").innerHTML = labels;
+  document.getElementById("monthTotal").textContent = money(total);
+  document.getElementById("bestDay").textContent = total > 0 ? money(highest) : "-";
+}
+
+document.getElementById("date").value = today();
+document.getElementById("month").value = today().slice(0, 7);
+document.getElementById("dayForm").onsubmit = function (e) { e.preventDefault(); showDay(); };
+document.getElementById("monthForm").onsubmit = function (e) { e.preventDefault(); showMonth(); };
+showDay();
+showMonth();
+</script>
+</body>
+</html>
