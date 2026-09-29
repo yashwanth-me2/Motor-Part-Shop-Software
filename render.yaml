@@ -1,0 +1,13 @@
+# One-click deploy on Render (https://render.com) - free plan
+services:
+  - type: web
+    name: mpss
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: TZ
+        value: Asia/Kolkata        # so "today" is the Indian date
+      - key: PYTHON_VERSION
+        value: 3.12.4
